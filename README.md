@@ -125,7 +125,7 @@ Formato de pessoa:
 
 ## 👨‍💻 Autor
 
-Jones de Oliveira Mendes
+**Jones de Oliveira Mendes**
 
 ## Agradecimentos
 
