@@ -1,0 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Space+Grotesk:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Sora", sans-serif;
+  background: radial-gradient(circle at top, #16212c 0%, #0f1720 45%, #0a0f14 100%);
+  color: #e7edf1;
+  min-height: 100vh;
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60;
+  }
+
+  .input-base {
+    @apply w-full rounded-xl border border-clay bg-white/70 px-4 py-2 text-sm text-ink shadow-soft transition focus:border-tide focus:outline-none focus:ring-2 focus:ring-tide/20 sm:text-base;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-tide px-4 py-2 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5 hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl border border-clay bg-white/70 px-3 py-2 text-sm font-semibold text-ink transition duration-200 hover:-translate-y-0.5 hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+}
