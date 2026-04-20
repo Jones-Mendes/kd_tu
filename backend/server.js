@@ -3,13 +3,37 @@ const cors = require("cors");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  return /https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
+};
+
 // ==================== CORS CONFIGURADO PARA PRODUÇÃO ====================
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",   // Vercel vai enviar a URL real
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Origem nao permitida pelo CORS"));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,                    // se você for usar cookies ou autenticação no futuro
-  optionsSuccessStatus: 200             // ajuda com alguns navegadores antigos
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 // =====================================================================
 
@@ -33,5 +57,5 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`Frontend permitido: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
+  console.log(`Frontend permitido: ${allowedOrigins.join(", ") || "origens padrao"}`);
 });

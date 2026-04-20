@@ -85,6 +85,51 @@ npm install
 npm run start
 ```
 
+## Deploy
+
+### Antes de publicar
+
+- O frontend precisa apontar para a URL publica da API usando a variavel VITE_API_URL.
+- O backend precisa receber a URL do frontend em FRONTEND_URL.
+- O backend usa o arquivo backend/data/pessoas.json como banco de dados. Em producao no Render, esse arquivo nao e uma estrategia confiavel de persistencia, porque o sistema de arquivos da instancia pode ser perdido em restart, redeploy ou troca de instancia.
+
+### Frontend na Vercel
+
+- Framework Preset: Vite
+- Root Directory: frontend
+- Build Command: npm run build
+- Output Directory: dist
+- Environment Variable: VITE_API_URL = URL publica do backend no Render
+
+### Backend no Render
+
+- Service Type: Web Service
+- Root Directory: backend
+- Build Command: npm install
+- Start Command: npm start
+- Environment Variable: FRONTEND_URL = URL publica do frontend na Vercel
+- Environment Variable opcional: PORT sera fornecida pelo proprio Render
+
+### Fluxo recomendado de deploy
+
+1. Publique primeiro o backend no Render.
+2. Copie a URL publica gerada no Render.
+3. Configure essa URL no frontend como VITE_API_URL na Vercel.
+4. Publique o frontend na Vercel.
+5. Copie a URL final da Vercel.
+6. Volte no Render e atualize FRONTEND_URL com a URL final do frontend.
+7. Faça um novo deploy no Render ou use Save Changes and Deploy.
+
+### Observacao importante sobre persistencia
+
+Se voce mantiver o JSON local como banco em producao:
+
+- os cadastros podem sumir apos novo deploy ou reinicio da aplicacao;
+- o comportamento pode variar conforme a infraestrutura do Render;
+- isso serve para demonstracao, nao para uso real.
+
+Para producao de verdade, substitua o JSON por banco externo, como PostgreSQL, Supabase, Neon ou MongoDB Atlas.
+
 ## 📦 Endpoints da API
 
 - GET /pessoas - lista pessoas
