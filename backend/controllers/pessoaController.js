@@ -4,29 +4,55 @@ const { v4: uuidv4 } = require("uuid");
 
 const caminhoArquivo = path.join(__dirname, "../data/pessoas.json");
 const statusPermitidos = new Set(["desaparecido", "encontrado"]);
-// Mapeia cidades conhecidas para o estado correspondente.
 const cidadeParaEstado = {
-  "Fortaleza": "Ceara",
-  "Sao Paulo": "Sao Paulo",
-  "Rio de Janeiro": "Rio de Janeiro",
-  "Salvador": "Bahia",
-  "Recife": "Pernambuco",
-  "Belo Horizonte": "Minas Gerais",
-  "Curitiba": "Parana",
-  "Porto Alegre": "Rio Grande do Sul",
-  "Belem": "Para",
-  "Manaus": "Amazonas",
-  "Brasilia": "Distrito Federal"
+  fortaleza: "Ceara",
+  salvador: "Bahia",
+  brasilia: "Distrito Federal",
+  curitiba: "Parana",
+  teresina: "Piaui",
+  "sao paulo": "Sao Paulo",
+  "rio de janeiro": "Rio de Janeiro",
+  "belo horizonte": "Minas Gerais",
+  "porto alegre": "Rio Grande do Sul"
 };
 
+const normalizarTexto = (valor) => {
+  if (typeof valor !== "string") {
+    return "";
+  }
+
+  return valor
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+};
+
+const formatarNomeProprio = (valor) =>
+  valor
+    .split(" ")
+    .filter(Boolean)
+    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
+    .join(" ");
+
+const normalizarEstado = (valor) => {
+  const textoNormalizado = normalizarTexto(valor);
+  if (!textoNormalizado) {
+    return "";
+  }
+
+  const chave = textoNormalizado.toLowerCase();
+  return cidadeParaEstado[chave] || formatarNomeProprio(textoNormalizado);
+};
 
 // Garante compatibilidade com dados antigos ao carregar o JSON.
 const normalizarPessoa = (pessoa) => {
   let alterado = false;
 
   const estadoOrigem = pessoa.estado || pessoa.cidade || "";
-  const estadoNormalizado = cidadeParaEstado[estadoOrigem] || estadoOrigem;
+  const estadoNormalizado = normalizarEstado(estadoOrigem);
 
+  // Mantem apenas o campo estado no modelo atual.
   if (pessoa.cidade) {
     delete pessoa.cidade;
     alterado = true;
@@ -37,16 +63,19 @@ const normalizarPessoa = (pessoa) => {
     alterado = true;
   }
 
+  // Corrige status invalidos para o default.
   if (!statusPermitidos.has(pessoa.status)) {
     pessoa.status = "desaparecido";
     alterado = true;
   }
 
+  // Evita campos obrigatorios vazios em dados legados.
   if (!pessoa.ultimaLocalizacao) {
     pessoa.ultimaLocalizacao = "Desconhecida";
     alterado = true;
   }
 
+  // Remove milissegundos para padrao de exibicao.
   if (pessoa.createdAt && pessoa.createdAt.includes(".")) {
     pessoa.createdAt = pessoa.createdAt.split(".")[0];
     alterado = true;
@@ -55,7 +84,7 @@ const normalizarPessoa = (pessoa) => {
   return alterado;
 };
 
-// Le o arquivo JSON e aplica normalizacoes necessárias.
+// Le o arquivo JSON e aplica normalizacoes necessarias.
 const lerDados = () => {
   try {
     const dados = fs.readFileSync(caminhoArquivo, "utf-8");
@@ -73,7 +102,7 @@ const lerDados = () => {
     }
 
     return pessoas;
-  } catch (error) {
+  } catch {
     return [];
   }
 };
@@ -87,9 +116,9 @@ exports.criarPessoa = (req, res) => {
   const pessoas = lerDados();
 
   const { nome, idade, estado, cidade, foto, ultimaLocalizacao } = req.body;
-  const estadoNormalizado = cidadeParaEstado[estado || cidade] || estado || cidade;
+  const estadoNormalizado = normalizarEstado(estado || cidade);
 
-  // 🔒 Validação dos campos obrigatorios.
+  // Valida campos obrigatorios antes de persistir.
   if (!nome || !idade || !estadoNormalizado) {
     return res.status(400).json({
       erro: "Nome, idade e estado são obrigatórios"
@@ -122,18 +151,16 @@ exports.listarPessoas = (req, res) => {
 
   let resultado = pessoas;
 
-  // 🔍 Filtro por nome
+  // Filtro por nome (case-insensitive).
   if (nome) {
-    resultado = resultado.filter(p =>
+    resultado = resultado.filter((p) =>
       p.nome.toLowerCase().includes(nome.toLowerCase())
     );
   }
 
-  // 🎯 Filtro por status
+  // Filtro por status.
   if (status) {
-    resultado = resultado.filter(p =>
-      p.status === status
-    );
+    resultado = resultado.filter((p) => p.status === status);
   }
 
   res.json(resultado);
@@ -144,7 +171,7 @@ exports.atualizarStatus = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  const pessoa = pessoas.find(p => p.id === id);
+  const pessoa = pessoas.find((p) => p.id === id);
 
   if (!pessoa) {
     return res.status(404).json({ erro: "Pessoa não encontrada" });
